@@ -31,14 +31,18 @@ def predict_churn(model, df, threshold=0.5):
     # Get predicted probabilities
     probabilities = model.predict_proba(X)[:, 1] 
     
-   
     print("Predicted probabilities:")
     for i, prob in enumerate(probabilities):
         print(f"Row {i + 1}: {prob}")
     
-
+    # Generate predictions
     predictions = (probabilities >= threshold).astype(int)
     df['predicted_churn'] = predictions
+
+    # Add churn classification column
+    df['churn_classification'] = 'No Churn'  # Default value
+    df.loc[(df['predicted_churn'] == 1) & (probabilities >= 0.5) & (probabilities < 0.7), 'churn_classification'] = 'Medium Churn'
+    df.loc[(df['predicted_churn'] == 1) & (probabilities >= 0.7), 'churn_classification'] = 'High Churn'
     
     return df
 
@@ -48,14 +52,10 @@ if __name__ == "__main__":
     new_data_path = "sample.csv"  
     new_data = pd.read_csv(new_data_path)
     
-   
     threshold = 0.5 
     result = predict_churn(model, new_data, threshold=threshold)
     
-
-    new_data['predicted_churn'] = result['predicted_churn']
-    
- 
+    # Save the results to a new CSV file
     output_file = "predicted_churn_results.csv"  
-    new_data.to_csv(output_file, index=False)
+    result.to_csv(output_file, index=False)
     print(f"Predictions saved to '{output_file}' with threshold {threshold}.")
